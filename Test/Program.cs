@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Net;
 using Connections;
+using Microsoft.Extensions.Configuration;
+using System.IO;
 
 namespace Test
 {
@@ -8,11 +10,15 @@ namespace Test
     {
         static void Main(string[] args)
         {
-            IPHostEntry iPHostEntry = Dns.GetHostEntry("localhost");
-            IPAddress iPAddress = iPHostEntry.AddressList[0];
-            IPEndPoint endPoint = new IPEndPoint(iPAddress, 11000);
+            IConfiguration config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", false, false)
+                .Build();
 
-            bool initialized = Connection.Init(endPoint, endPoint, 2, 128, Display);
+            IPEndPoint localEP = new IPEndPoint(Dns.GetHostEntry("localhost").AddressList[0], Convert.ToInt32(config["endpoint:port"]));
+            IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse(config["endpoint:ip"]), Convert.ToInt32(config["endpoint:port"]));
+
+            bool initialized = Connection.Init(localEP, remoteEP, 2, 128, Display);
             Connection.Close();
             Console.WriteLine("Initialized: {0}", initialized);
         }
