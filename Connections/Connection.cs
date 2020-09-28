@@ -10,9 +10,9 @@ namespace Connections
     public delegate void DisplayMethod(string s);
     public static class Connection
     {
-        private static Socket listener = new Socket(AddressFamily.InterNetworkV6, SocketType.Stream, ProtocolType.Tcp);
-        private static Socket sender = new Socket(AddressFamily.InterNetworkV6, SocketType.Stream, ProtocolType.Tcp);
-        private static Socket accept = new Socket(AddressFamily.InterNetworkV6, SocketType.Stream, ProtocolType.Tcp);
+        private static Socket listener;
+        private static Socket sender;
+        private static Socket accept;
         private static byte[] recieveBuffer;
         private static int listenQueueSize;
         private static int bufferSize;
@@ -20,18 +20,54 @@ namespace Connections
         //Delegate to hold method for displaying messages; to be provided by client program
         private static DisplayMethod Display;
 
+        //Used to cause the main thread to wait for the accepting process to complete
+        private static ManualResetEvent done = new ManualResetEvent(false);
+
         //Client program passes IPEndpoints to class, then class configures listener and sender sockets; If fail, return false
         public static bool Init(IPEndPoint local, IPEndPoint remote, int queueSize, int bufferLength, DisplayMethod method)
         {
             //This method makes Debug.Writeline() write to console when built in debug configuration
             Trace.Listeners.Add(new TextWriterTraceListener(System.Console.Out));
 
-            //Used to cause the main thread to wait for the accepting process to complete
-            WaitHandle acceptProcess;
-
             listenQueueSize = queueSize;
             bufferSize = bufferLength;
             Display = method;
+
+            //Create listener
+            try
+            {
+                listener = new Socket(local.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                Debug.WriteLine("Listener socket instantiated");
+            }
+            catch(Exception e)
+            {
+                Debug.WriteLine("Failed to create listener: {0}", e.ToString());
+                return false;
+            }
+            
+            //Create sender socket
+            try
+            {
+                sender = new Socket(remote.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                Debug.WriteLine("Sender socket instantiated");
+            }
+            catch(Exception e)
+            {
+                Debug.WriteLine("Failed to create sender: {0}", e.ToString());
+                return false;
+            }
+            
+            //Create accept socket
+            try
+            {
+                accept = new Socket(remote.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                Debug.WriteLine("Accept socket instantiated");
+            }
+            catch(Exception e)
+            {
+                Debug.WriteLine("Failed to create accept: {0}", e.ToString());
+                return false;
+            }
 
             try
             {
@@ -44,7 +80,7 @@ namespace Connections
                 Debug.WriteLine("Beginning asynchronous accepting procedure...");
 
                 //Begin asynchronous accepting process and store the WaitHandle
-                acceptProcess = listener.BeginAccept(AcceptCallback, null).AsyncWaitHandle;
+                listener.BeginAccept(new AsyncCallback(AcceptCallback), null);
             }
             catch(Exception e)
             {
@@ -66,7 +102,7 @@ namespace Connections
             }
 
             //Wait until the remote connection has been accepted
-            acceptProcess.WaitOne();
+            done.WaitOne();
 
             return true;
         }
@@ -75,14 +111,22 @@ namespace Connections
         private static void AcceptCallback(IAsyncResult ar)
         {
             //Assign accepted remote connection to accept
-            accept = listener.EndAccept(ar);
+            try
+            {
+                accept = listener.EndAccept(ar);
+                listener.Close();
+            }
+            catch(Exception e)
+            {
+                Debug.WriteLine("Failed to accept connection: {0}", e.ToString());
+            }
+            
             Debug.WriteLine("Connection accepted");
+            done.Set();
         }
 
         public static void Close()
         {
-            //listener.Shutdown(SocketShutdown.Both); Removed because listener is never connected remotely
-            listener.Close();
             sender.Shutdown(SocketShutdown.Both);
             sender.Close();
             accept.Shutdown(SocketShutdown.Both);
