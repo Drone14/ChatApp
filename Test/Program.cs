@@ -15,8 +15,8 @@ namespace Test
                 .AddJsonFile("appsettings.json", false, false)
                 .Build();
 
-            IPEndPoint localEP = new IPEndPoint(Dns.GetHostEntry("localhost").AddressList[0], Convert.ToInt32(config["endpoint:port"]));
-            IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse(config["endpoint:ip"]), Convert.ToInt32(config["endpoint:port"]));
+            IPEndPoint localEP = new IPEndPoint(IPAddress.Parse(config["localEP:ip"]), Convert.ToInt32(config["localEP:port"]));
+            IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse(config["remoteEP:ip"]), Convert.ToInt32(config["remoteEP:port"]));
 
             bool initialized = Connection.Init(localEP, remoteEP, 2, 128, Display);
             Connection.Close();
