@@ -22,6 +22,8 @@ namespace Connections
 
         //Used to cause the main thread to wait for the accepting process to complete
         private static readonly ManualResetEvent done = new ManualResetEvent(false);
+        //Used to wait until receiving is done if it is in progress
+        private static readonly ManualResetEvent receiveEvent = new ManualResetEvent(true);
 
         //Client program passes IPEndpoints to class, then class configures listener and sender sockets; If fail, return false
         public static bool Init(IPEndPoint local, IPEndPoint remote, int queueSize, int bufferLength, DisplayMethod method)
@@ -134,12 +136,14 @@ namespace Connections
             try
             {
                 bytesReceived = accept.EndReceive(ar);
+                receiveEvent.Reset();
                 Debug.WriteLine("{0} bytes received", bytesReceived);
 
                 //Display the message and clear the buffer
                 if (bytesReceived > 0) //If bytes were read
                 {
                     Display(Encoding.ASCII.GetString(receiveBuffer));
+                    receiveEvent.Set();
                     Array.Clear(receiveBuffer, 0, receiveBuffer.Length);
                     accept.BeginReceive(receiveBuffer, 0, receiveBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
                 }
@@ -165,6 +169,8 @@ namespace Connections
 
         public static void Close()
         {
+            receiveEvent.WaitOne();
+
             sender.Shutdown(SocketShutdown.Both);
             sender.Close();
             if (accept.Connected)
