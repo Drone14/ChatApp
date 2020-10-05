@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 
@@ -13,15 +14,14 @@ namespace Connections
         private static Socket listener;
         private static Socket sender;
         private static Socket accept;
-        private static byte[] recieveBuffer;
-        private static int listenQueueSize;
-        private static int bufferSize;
+        private static byte[] receiveBuffer;
+        private static byte[] sendBuffer;
 
         //Delegate to hold method for displaying messages; to be provided by client program
         private static DisplayMethod Display;
 
         //Used to cause the main thread to wait for the accepting process to complete
-        private static ManualResetEvent done = new ManualResetEvent(false);
+        private static readonly ManualResetEvent done = new ManualResetEvent(false);
 
         //Client program passes IPEndpoints to class, then class configures listener and sender sockets; If fail, return false
         public static bool Init(IPEndPoint local, IPEndPoint remote, int queueSize, int bufferLength, DisplayMethod method)
@@ -29,8 +29,8 @@ namespace Connections
             //This method makes Debug.Writeline() write to console when built in debug configuration
             Trace.Listeners.Add(new TextWriterTraceListener(System.Console.Out));
 
-            listenQueueSize = queueSize;
-            bufferSize = bufferLength;
+            receiveBuffer = new byte[bufferLength];
+            sendBuffer = new byte[bufferLength];
             Display = method;
 
             //Create listener
@@ -69,22 +69,21 @@ namespace Connections
                 return false;
             }
 
+            //Get remote connection to assign to accept
             try
             {
                 //Begin listening
                 listener.Bind(local);
-                listener.Listen(listenQueueSize);
+                listener.Listen(queueSize);
                 Debug.WriteLine("Listening on " + listener.LocalEndPoint.ToString() + "...");
 
-                //Accepting and recieving must be done asynchronously so that thread wont be blocked here; AcceptCallback will block on EndAccept method until a connection is available to accept
+                //Accepting must be done asynchronously so that thread wont be blocked here; AcceptCallback will block on EndAccept method until a connection is available to accept
                 Debug.WriteLine("Beginning asynchronous accepting procedure...");
-
-                //Begin asynchronous accepting process and store the WaitHandle
                 listener.BeginAccept(new AsyncCallback(AcceptCallback), null);
             }
             catch(Exception e)
             {
-                Debug.WriteLine("Failed to listen: {0}", e.ToString());
+                Debug.WriteLine("Failed to accept remote connection: {0}", e.ToString());
                 return false;
             }
 
@@ -103,6 +102,10 @@ namespace Connections
 
             //Wait until the remote connection has been accepted
             done.WaitOne();
+
+            //Begin asynchronous recieving procedure
+            Debug.WriteLine("Beginning asynchronous receiving procedure...");
+            accept.BeginReceive(receiveBuffer, 0, receiveBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
 
             return true;
         }
@@ -125,12 +128,51 @@ namespace Connections
             done.Set();
         }
 
+        private static void ReceiveCallback(IAsyncResult ar)
+        {
+            int bytesReceived;
+            try
+            {
+                bytesReceived = accept.EndReceive(ar);
+                Debug.WriteLine("{0} bytes received", bytesReceived);
+
+                //Display the message and clear the buffer
+                if (bytesReceived > 0) //If bytes were read
+                {
+                    Display(Encoding.ASCII.GetString(receiveBuffer));
+                    Array.Clear(receiveBuffer, 0, receiveBuffer.Length);
+                    accept.BeginReceive(receiveBuffer, 0, receiveBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
+                }
+                else
+                {
+                    Debug.WriteLine("Accept socket connetion ended... Closing accept socket");
+                    accept.Shutdown(SocketShutdown.Both);
+                    accept.Close();
+                }
+            }
+            catch(ObjectDisposedException)
+            {
+                Debug.WriteLine("Receive process stopping because accept socket has been closed");
+                return;
+            }
+        }
+
+        public static void Send(string s)
+        {
+            sendBuffer = Encoding.ASCII.GetBytes(s);
+            sender.Send(sendBuffer);
+            Array.Clear(sendBuffer, 0, sendBuffer.Length);
+        }
+
         public static void Close()
         {
             sender.Shutdown(SocketShutdown.Both);
             sender.Close();
-            accept.Shutdown(SocketShutdown.Both);
-            accept.Close();
+            if (accept.Connected)
+            {
+                accept.Shutdown(SocketShutdown.Both);
+                accept.Close();
+            }
         }
     }
 }

@@ -18,9 +18,13 @@ namespace Test
             IPEndPoint localEP = new IPEndPoint(IPAddress.Parse(config["localEP:ip"]), Convert.ToInt32(config["localEP:port"]));
             IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse(config["remoteEP:ip"]), Convert.ToInt32(config["remoteEP:port"]));
 
-            bool initialized = Connection.Init(localEP, remoteEP, 2, 128, Display);
+            if (!Connection.Init(localEP, remoteEP, 2, 256, Display))
+                return;
+
+            Connection.Send("Test message");
+
             Connection.Close();
-            Console.WriteLine("Initialized: {0}", initialized);
+            return;
         }
 
         static void Display(string s)
