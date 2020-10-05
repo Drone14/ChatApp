@@ -153,7 +153,6 @@ namespace Connections
             catch(ObjectDisposedException)
             {
                 Debug.WriteLine("Receive process stopping because accept socket has been closed");
-                return;
             }
         }
 
