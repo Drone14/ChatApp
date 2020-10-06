@@ -122,7 +122,7 @@ namespace Connections
         public static void Send(string s)
         {
             sending.Reset();
-            sendBuffer = Encrypt(Encoding.ASCII.GetBytes(s));
+            sendBuffer = Encrypt(s);
             sender.BeginSend(sendBuffer, 0, sendBuffer.Length, SocketFlags.None, new AsyncCallback(SendCallback), null);
         }
         //Method that will be called when connection is accepted
@@ -180,7 +180,7 @@ namespace Connections
             sending.Set();
         }
         //Returns the output of encryption of the byte array with a prepended IV
-        private static byte[] Encrypt(byte[] b)
+        private static byte[] Encrypt(string s)
         {
             byte[] encrypted;
 
@@ -195,7 +195,7 @@ namespace Connections
                     {
                         using (StreamWriter swEnc = new StreamWriter(csEnc))
                         {
-                            swEnc.Write(b, 0, b.Length);
+                            swEnc.Write(s);
 
                             int IVLength = alg.IV.Length;
                             long msLength = msEnc.Length;
