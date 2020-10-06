@@ -147,7 +147,7 @@ namespace Connections
                 //Display the message and clear the buffer
                 if (bytesReceived > 0) //If bytes were read
                 {
-                    Display(Encoding.ASCII.GetString(receiveBuffer).Trim());
+                    Display(Encoding.ASCII.GetString(receiveBuffer).Trim('\0'));
                     Array.Clear(receiveBuffer, 0, receiveBuffer.Length);
                     receiving.Set();
                     accept.BeginReceive(receiveBuffer, 0, receiveBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
