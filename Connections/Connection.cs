@@ -22,8 +22,6 @@ namespace Connections
 
         //Used to cause the main thread to wait for the accepting process to complete
         private static readonly ManualResetEvent done = new ManualResetEvent(false);
-        //Used to wait until receiving is done if it is in progress
-        private static readonly ManualResetEvent receiveEvent = new ManualResetEvent(true);
 
         //Client program passes IPEndpoints to class, then class configures listener and sender sockets; If fail, return false
         public static bool Init(IPEndPoint local, IPEndPoint remote, int queueSize, int bufferLength, DisplayMethod method)
@@ -111,7 +109,11 @@ namespace Connections
 
             return true;
         }
-
+        public static void Send(string s)
+        {
+            sendBuffer = Encoding.ASCII.GetBytes(s);
+            sender.BeginSend(sendBuffer, 0, sendBuffer.Length, SocketFlags.None, new AsyncCallback(SendCallback), null);
+        }
         //Method that will be called when connection is accepted
         private static void AcceptCallback(IAsyncResult ar)
         {
@@ -120,6 +122,7 @@ namespace Connections
             {
                 accept = listener.EndAccept(ar);
                 listener.Close();
+                Debug.WriteLine("Accept socket connected");
             }
             catch(Exception e)
             {
@@ -129,21 +132,18 @@ namespace Connections
             Debug.WriteLine("Connection accepted");
             done.Set();
         }
-
         private static void ReceiveCallback(IAsyncResult ar)
         {
             int bytesReceived;
             try
             {
                 bytesReceived = accept.EndReceive(ar);
-                receiveEvent.Reset();
                 Debug.WriteLine("{0} bytes received", bytesReceived);
 
                 //Display the message and clear the buffer
                 if (bytesReceived > 0) //If bytes were read
                 {
                     Display(Encoding.ASCII.GetString(receiveBuffer));
-                    receiveEvent.Set();
                     Array.Clear(receiveBuffer, 0, receiveBuffer.Length);
                     accept.BeginReceive(receiveBuffer, 0, receiveBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
                 }
@@ -159,18 +159,13 @@ namespace Connections
                 Debug.WriteLine("Receive process stopping because accept socket has been closed");
             }
         }
-
-        public static void Send(string s)
+        private static void SendCallback(IAsyncResult ar)
         {
-            sendBuffer = Encoding.ASCII.GetBytes(s);
-            sender.Send(sendBuffer);
-            Array.Clear(sendBuffer, 0, sendBuffer.Length);
+            sender.EndSend(ar);
+            Debug.WriteLine("SendCallback finished executing");
         }
-
         public static void Close()
         {
-            receiveEvent.WaitOne();
-
             sender.Shutdown(SocketShutdown.Both);
             sender.Close();
             if (accept.Connected)
