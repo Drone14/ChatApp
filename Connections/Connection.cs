@@ -194,10 +194,11 @@ namespace Connections
                     using (CryptoStream csEnc = new CryptoStream(msEnc, enc, CryptoStreamMode.Write))
                     {
                         csEnc.Write(b, 0, b.Length);
+
+                        encrypted = new byte[alg.IV.Length + msEnc.Length];
+                        alg.IV.CopyTo(encrypted, 0);
+                        msEnc.ToArray().CopyTo(encrypted, alg.IV.Length);
                     }
-                    encrypted = new byte[alg.IV.Length + msEnc.Length];
-                    alg.IV.CopyTo(encrypted, 0);
-                    msEnc.ToArray().CopyTo(encrypted, alg.IV.Length);
                 }
             }
 
