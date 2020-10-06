@@ -195,10 +195,11 @@ namespace Connections
                     {
                         using (StreamWriter swEnc = new StreamWriter(csEnc))
                         {
-                            csEnc.Write(b, 0, b.Length);
+                            swEnc.Write(b, 0, b.Length);
 
                             int IVLength = alg.IV.Length;
                             long msLength = msEnc.Length;
+                            string msString = msEnc.ToArray();
 
                             encrypted = new byte[alg.IV.Length + msEnc.Length];
                             alg.IV.CopyTo(encrypted, 0);
