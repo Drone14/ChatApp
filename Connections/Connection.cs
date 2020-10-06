@@ -189,18 +189,21 @@ namespace Connections
                 alg.Key = key;
 
                 ICryptoTransform enc = alg.CreateEncryptor();
-                using(MemoryStream msEnc = new MemoryStream())
+                using (MemoryStream msEnc = new MemoryStream())
                 {
                     using (CryptoStream csEnc = new CryptoStream(msEnc, enc, CryptoStreamMode.Write))
                     {
-                        csEnc.Write(b, 0, b.Length);
+                        using (StreamWriter swEnc = new StreamWriter(csEnc))
+                        {
+                            csEnc.Write(b, 0, b.Length);
 
-                        int IVLength = alg.IV.Length;
-                        long msLength = msEnc.Length;
+                            int IVLength = alg.IV.Length;
+                            long msLength = msEnc.Length;
 
-                        encrypted = new byte[alg.IV.Length + msEnc.Length];
-                        alg.IV.CopyTo(encrypted, 0);
-                        msEnc.ToArray().CopyTo(encrypted, alg.IV.Length);
+                            encrypted = new byte[alg.IV.Length + msEnc.Length];
+                            alg.IV.CopyTo(encrypted, 0);
+                            msEnc.ToArray().CopyTo(encrypted, alg.IV.Length);
+                        }
                     }
                 }
             }
