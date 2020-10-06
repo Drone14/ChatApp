@@ -195,6 +195,9 @@ namespace Connections
                     {
                         csEnc.Write(b, 0, b.Length);
 
+                        int IVLength = alg.IV.Length;
+                        long msLength = msEnc.Length;
+
                         encrypted = new byte[alg.IV.Length + msEnc.Length];
                         alg.IV.CopyTo(encrypted, 0);
                         msEnc.ToArray().CopyTo(encrypted, alg.IV.Length);
