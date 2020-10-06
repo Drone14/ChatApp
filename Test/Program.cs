@@ -3,6 +3,7 @@ using System.Net;
 using Connections;
 using Microsoft.Extensions.Configuration;
 using System.IO;
+using System.Threading;
 
 namespace Test
 {
@@ -22,7 +23,7 @@ namespace Test
                 return;
 
             Connection.Send("Test message");
-
+            Thread.Sleep(3000);
             Connection.Close();
             return;
         }
