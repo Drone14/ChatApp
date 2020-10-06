@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
@@ -16,6 +17,7 @@ namespace Connections
         private static Socket accept;
         private static byte[] receiveBuffer;
         private static byte[] sendBuffer;
+        private static byte[] key;
 
         //Delegate to hold method for displaying messages; to be provided by client program
         private static DisplayMethod Display;
@@ -26,13 +28,19 @@ namespace Connections
         private static readonly ManualResetEvent receiving = new ManualResetEvent(true);
 
         //Client program passes IPEndpoints to class, then class configures listener and sender sockets; If fail, return false
-        public static bool Init(IPEndPoint local, IPEndPoint remote, int queueSize, int bufferLength, DisplayMethod method)
+        public static bool Init(IPEndPoint local, IPEndPoint remote, int queueSize, int bufferLength, byte[] k, DisplayMethod method)
         {
             //This method makes Debug.Writeline() write to console when built in debug configuration
             Trace.Listeners.Add(new TextWriterTraceListener(System.Console.Out));
 
             receiveBuffer = new byte[bufferLength];
             sendBuffer = new byte[bufferLength];
+
+            //Assign key
+            key = new byte[k.Length];
+            Array.Copy(k, key, k.Length);
+
+            //Subscribe the client's display method to the Display delegate
             Display = method;
 
             //Create listener
@@ -114,7 +122,7 @@ namespace Connections
         public static void Send(string s)
         {
             sending.Reset();
-            sendBuffer = Encoding.ASCII.GetBytes(s);
+            sendBuffer = Encrypt(Encoding.ASCII.GetBytes(s));
             sender.BeginSend(sendBuffer, 0, sendBuffer.Length, SocketFlags.None, new AsyncCallback(SendCallback), null);
         }
         //Method that will be called when connection is accepted
@@ -170,6 +178,30 @@ namespace Connections
             sender.EndSend(ar);
             Debug.WriteLine("SendCallback finished executing");
             sending.Set();
+        }
+        //Returns the output of encryption of the byte array with a prepended IV
+        private static byte[] Encrypt(byte[] b)
+        {
+            byte[] encrypted;
+
+            using(Aes alg = Aes.Create())
+            {
+                alg.Key = key;
+
+                ICryptoTransform enc = alg.CreateEncryptor();
+                using(MemoryStream msEnc = new MemoryStream())
+                {
+                    using (CryptoStream csEnc = new CryptoStream(msEnc, enc, CryptoStreamMode.Write))
+                    {
+                        csEnc.Write(b, 0, b.Length);
+                    }
+                    encrypted = new byte[alg.IV.Length + msEnc.Length];
+                    alg.IV.CopyTo(encrypted, 0);
+                    msEnc.ToArray().CopyTo(encrypted, alg.IV.Length);
+                }
+            }
+
+            return encrypted;
         }
         public static void Close()
         {

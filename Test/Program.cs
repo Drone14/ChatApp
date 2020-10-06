@@ -18,8 +18,9 @@ namespace Test
 
             IPEndPoint localEP = new IPEndPoint(IPAddress.Parse(config["localEP:ip"]), Convert.ToInt32(config["localEP:port"]));
             IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse(config["remoteEP:ip"]), Convert.ToInt32(config["remoteEP:port"]));
+            byte[] key = HexStringToByteArray("5468617473206D79204B756E67204675");
 
-            if (!Connection.Init(localEP, remoteEP, 2, 256, Display))
+            if (!Connection.Init(localEP, remoteEP, 2, 256, key, Display))
                 return;
 
             Connection.Send("Test message");
@@ -27,8 +28,16 @@ namespace Test
             Connection.Close();
             return;
         }
+        public static byte[] HexStringToByteArray(string hex)
+        {
+            byte[] bytes = new byte[hex.Length / 2];
 
-        static void Display(string s)
+            for(int i = 0; i < bytes.Length; i += 2)
+                bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
+
+            return bytes;
+        }
+        public static void Display(string s)
         {
             Console.WriteLine(s);
         }
