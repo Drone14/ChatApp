@@ -199,7 +199,7 @@ namespace Connections
 
                             int IVLength = alg.IV.Length;
                             long msLength = msEnc.Length;
-                            string msString = msEnc.ToArray();
+                            byte[] msString = msEnc.ToArray();
 
                             encrypted = new byte[alg.IV.Length + msEnc.Length];
                             alg.IV.CopyTo(encrypted, 0);
