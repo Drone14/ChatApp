@@ -248,8 +248,11 @@ namespace Connections
             sending.WaitOne();
             receiving.WaitOne();
 
-            sender.Shutdown(SocketShutdown.Both);
-            sender.Close();
+            if (sender.Connected)
+            {
+                sender.Shutdown(SocketShutdown.Both);
+                sender.Close();
+            }
             if (accept.Connected)
             {
                 accept.Shutdown(SocketShutdown.Both);
