@@ -205,8 +205,9 @@ namespace Connections
                             alg.IV.CopyTo(encrypted, 0);
                             msEnc.ToArray().CopyTo(encrypted, alg.IV.Length);*/
 
-                            encrypted = msEnc.ToArray();
+                            
                         }
+                        encrypted = msEnc.ToArray();
                     }
                 }
             }
