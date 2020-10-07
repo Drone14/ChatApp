@@ -115,7 +115,7 @@ namespace Connections
 
             //Begin asynchronous recieving procedure
             Debug.WriteLine("Beginning asynchronous receiving procedure...");
-            accept.BeginReceive(receiveBuffer, 0, receiveBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
+            accept.BeginReceive(receiveBuffer, 0, accept.Available, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
 
             return true;
         }
@@ -146,16 +146,23 @@ namespace Connections
         private static void ReceiveCallback(IAsyncResult ar)
         {
             int bytesReceived;
+            byte[] bytes;
+
             try
             {
                 bytesReceived = accept.EndReceive(ar);
                 receiving.Reset();
                 Debug.WriteLine("{0} bytes received", bytesReceived);
 
+                //Copy the data received to a new array
+                bytes = new byte[bytesReceived];
+                Array.Copy(receiveBuffer, 0, bytes, 0, bytes.Length);
+
                 //Display the message and clear the buffer
                 if (bytesReceived > 0) //If bytes were read
                 {
-                    Display(Encoding.ASCII.GetString(receiveBuffer).Trim('\0'));
+                    //Display(Encoding.ASCII.GetString(receiveBuffer).Trim('\0'));
+                    Display(Decrypt(bytes));
                     Array.Clear(receiveBuffer, 0, receiveBuffer.Length);
                     receiving.Set();
                     accept.BeginReceive(receiveBuffer, 0, receiveBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
@@ -179,7 +186,7 @@ namespace Connections
             Debug.WriteLine("SendCallback finished executing");
             sending.Set();
         }
-        //Returns the output of encryption of the byte array with a prepended IV
+        //Returns the output of encryption of the string with a prepended IV
         private static byte[] Encrypt(string s)
         {
             byte[] encrypted;
@@ -205,6 +212,36 @@ namespace Connections
             }
 
             return encrypted;
+        }
+        private static string Decrypt(byte[] b)
+        {
+            string plaintext;
+
+            using (Aes alg = Aes.Create())
+            {
+                alg.Key = key;
+                byte[] ivector = new byte[alg.IV.Length];
+                byte[] bytes = new byte[b.Length - alg.IV.Length];
+
+                //Copy the IV to ivector and copy the data to bytes
+                Array.Copy(b, 0, ivector, 0, alg.IV.Length);
+                Array.Copy(b, alg.IV.Length, bytes, 0, bytes.Length);
+
+                //Give the IV to Aes object
+                alg.IV = ivector;
+
+                ICryptoTransform dec = alg.CreateDecryptor();
+                using (MemoryStream msDec = new MemoryStream(b))
+                {
+                    using (CryptoStream csDec = new CryptoStream(msDec, alg, CryptoStreamMode.Read))
+                    {
+                        using (StreamReader srDec = new StreamReader(csDec))
+                            plaintext = srDec.ReadToEnd();
+                    }
+                }
+            }
+
+            return plaintext;
         }
         public static void Close()
         {
