@@ -115,7 +115,7 @@ namespace Connections
 
             //Begin asynchronous recieving procedure
             Debug.WriteLine("Beginning asynchronous receiving procedure...");
-            accept.BeginReceive(receiveBuffer, 0, accept.Available, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
+            accept.BeginReceive(receiveBuffer, 0, receiveBuffer.Length, SocketFlags.None, new AsyncCallback(ReceiveCallback), null);
 
             return true;
         }
