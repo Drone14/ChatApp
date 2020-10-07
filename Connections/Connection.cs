@@ -231,7 +231,7 @@ namespace Connections
                 alg.IV = ivector;
 
                 ICryptoTransform dec = alg.CreateDecryptor();
-                using (MemoryStream msDec = new MemoryStream(b))
+                using (MemoryStream msDec = new MemoryStream(bytes))
                 {
                     using (CryptoStream csDec = new CryptoStream(msDec, dec, CryptoStreamMode.Read))
                     {
