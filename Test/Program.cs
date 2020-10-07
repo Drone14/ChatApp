@@ -18,7 +18,7 @@ namespace Test
 
             IPEndPoint localEP = new IPEndPoint(IPAddress.Parse(config["localEP:ip"]), Convert.ToInt32(config["localEP:port"]));
             IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse(config["remoteEP:ip"]), Convert.ToInt32(config["remoteEP:port"]));
-            byte[] key = HexStringToByteArray("5468617473206D79204B756E67204675");
+            byte[] key = HexStringToByteArray(config["AESkey"]);
 
             if (!Connection.Init(localEP, remoteEP, 2, 256, key, Display))
                 return;
