@@ -196,15 +196,14 @@ namespace Connections
                         using (StreamWriter swEnc = new StreamWriter(csEnc))
                         {
                             swEnc.Write(s);
-
-                            int IVLength = alg.IV.Length;
-                            long msLength = msEnc.Length;
-                            byte[] msString = msEnc.ToArray();
-
-                            encrypted = new byte[alg.IV.Length + msEnc.Length];
-                            alg.IV.CopyTo(encrypted, 0);
-                            msEnc.ToArray().CopyTo(encrypted, alg.IV.Length);
                         }
+                        int IVLength = alg.IV.Length;
+                        long msLength = msEnc.Length;
+                        byte[] msString = msEnc.ToArray();
+
+                        encrypted = new byte[alg.IV.Length + msEnc.Length];
+                        alg.IV.CopyTo(encrypted, 0);
+                        msEnc.ToArray().CopyTo(encrypted, alg.IV.Length);
                     }
                 }
             }
