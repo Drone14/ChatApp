@@ -183,6 +183,7 @@ namespace Connections
         private static byte[] Encrypt(string s)
         {
             byte[] encrypted;
+            byte[] msArray;
 
             using(Aes alg = Aes.Create())
             {
@@ -194,22 +195,13 @@ namespace Connections
                     using (CryptoStream csEnc = new CryptoStream(msEnc, enc, CryptoStreamMode.Write))
                     {
                         using (StreamWriter swEnc = new StreamWriter(csEnc))
-                        {
                             swEnc.Write(s);
-
-                            /*int IVLength = alg.IV.Length;
-                            long msLength = msEnc.Length;
-                            byte[] msString = msEnc.ToArray();
-
-                            encrypted = new byte[alg.IV.Length + msEnc.Length];
-                            alg.IV.CopyTo(encrypted, 0);
-                            msEnc.ToArray().CopyTo(encrypted, alg.IV.Length);*/
-
-                            
-                        }
-                        encrypted = msEnc.ToArray();
+                        msArray = msEnc.ToArray();
                     }
                 }
+                encrypted = new byte[alg.IV.Length + msArray.Length];
+                alg.IV.CopyTo(encrypted, 0);
+                msArray.CopyTo(encrypted, alg.IV.Length);
             }
 
             return encrypted;
