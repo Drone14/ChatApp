@@ -233,7 +233,7 @@ namespace Connections
                 ICryptoTransform dec = alg.CreateDecryptor();
                 using (MemoryStream msDec = new MemoryStream(b))
                 {
-                    using (CryptoStream csDec = new CryptoStream(msDec, alg, CryptoStreamMode.Read))
+                    using (CryptoStream csDec = new CryptoStream(msDec, dec, CryptoStreamMode.Read))
                     {
                         using (StreamReader srDec = new StreamReader(csDec))
                             plaintext = srDec.ReadToEnd();
