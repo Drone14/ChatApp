@@ -10,7 +10,7 @@ namespace ChatAppGUI
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public delegate void DisplayCallback(string);
+    public delegate void DisplayCallback(string s);
     public partial class MainWindow : Window
     {
         public MainWindow()
