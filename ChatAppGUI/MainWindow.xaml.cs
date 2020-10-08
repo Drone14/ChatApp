@@ -10,6 +10,7 @@ namespace ChatAppGUI
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
+    public delegate void DisplayCallback(string);
     public partial class MainWindow : Window
     {
         public MainWindow()
@@ -38,6 +39,10 @@ namespace ChatAppGUI
             return bytes;
         }
         public void Display(string s)
+        {
+            DisplayBox.Dispatcher.Invoke(new DisplayCallback(DisplayCB), new object[] { s });
+        }
+        public void DisplayCB(string s)
         {
             DisplayBox.Text += (s + '\n');
         }
