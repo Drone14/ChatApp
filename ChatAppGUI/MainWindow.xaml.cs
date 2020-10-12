@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.IO;
 using System.Net;
+using System.Threading.Tasks;
 using System.Windows;
 
 namespace ChatAppGUI
@@ -26,10 +27,12 @@ namespace ChatAppGUI
             IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse(config["remoteEP:ip"]), Convert.ToInt32(config["remoteEP:port"]));
             byte[] key = HexStringToByteArray(config["AESkey"]);
 
-            if (!Connection.Init(localEP, remoteEP, 2, 512, key, Display))
-                return;
-
-            SendButton.IsEnabled = true;
+            Task.Run(() =>
+            {
+                if (!Connection.Init(localEP, remoteEP, 2, 512, key, Display))
+                    return;
+                SendButton.IsEnabled = true;
+            } );
         }
         private byte[] HexStringToByteArray(string hex)
         {
