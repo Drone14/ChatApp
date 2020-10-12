@@ -32,6 +32,7 @@ namespace ChatAppGUI
                 if (!Connection.Init(localEP, remoteEP, 2, 512, key, Display))
                     return;
                 SendButton.IsEnabled = true;
+                SendButton.Dispatcher.Invoke(() => SendButton.IsEnabled = true);
             } );
         }
         private byte[] HexStringToByteArray(string hex)
