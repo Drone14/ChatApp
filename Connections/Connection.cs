@@ -4,7 +4,6 @@ using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Security.Cryptography;
-using System.Text;
 using System.Threading;
 
 namespace Connections
@@ -123,6 +122,8 @@ namespace Connections
         {
             sending.Reset();
             sendBuffer = Encrypt(s);
+
+            //Note that the length of message is restricted by the size of the buffer provided by the client program
             sender.BeginSend(sendBuffer, 0, sendBuffer.Length, SocketFlags.None, new AsyncCallback(SendCallback), null);
         }
         //Method that will be called when connection is accepted

@@ -15,6 +15,8 @@ namespace ChatAppGUI
     {
         public MainWindow()
         {
+            InitializeComponent();
+
             IConfiguration config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", false, false)
@@ -24,10 +26,10 @@ namespace ChatAppGUI
             IPEndPoint remoteEP = new IPEndPoint(IPAddress.Parse(config["remoteEP:ip"]), Convert.ToInt32(config["remoteEP:port"]));
             byte[] key = HexStringToByteArray(config["AESkey"]);
 
-            if (!Connection.Init(localEP, remoteEP, 2, 256, key, Display))
+            if (!Connection.Init(localEP, remoteEP, 2, 512, key, Display))
                 return;
 
-            InitializeComponent();
+            SendButton.IsEnabled = true;
         }
         private byte[] HexStringToByteArray(string hex)
         {
@@ -48,6 +50,7 @@ namespace ChatAppGUI
         }
         public void OnClick(object sender, RoutedEventArgs e)
         {
+            SentBox.Text += (MessageBox.Text + '\n');
             Connection.Send(MessageBox.Text);
             MessageBox.Clear();
         }
