@@ -6,9 +6,13 @@
         xmlns:local="clr-namespace:ChatAppGUI"
         mc:Ignorable="d" Height="450" Width="800" Title="My Chat App" Closing="OnClose">
     <Grid>
-        <DockPanel LastChildFill="True" Margin="20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"></ColumnDefinition>
+            <ColumnDefinition></ColumnDefinition>
+        </Grid.ColumnDefinitions>
+        <DockPanel LastChildFill="True" Margin="20, 20, 10, 20" Grid.Row="0" Grid.Column="0">
             <DockPanel LastChildFill="True" DockPanel.Dock="Bottom" Height="40">
-                <Button x:Name="SendButton" DockPanel.Dock="Right" Width="50" Click="OnClick" IsEnabled="False">Send</Button>
+                <Button x:Name="SendButton" DockPanel.Dock="Right" Width="50" Click="OnSendClick" IsEnabled="False">Send</Button>
                 <TextBox x:Name="MessageBox" TextWrapping="Wrap" MaxLength="496"></TextBox>
             </DockPanel>
             <Grid>
@@ -18,6 +22,39 @@
                 </Grid.ColumnDefinitions>
                 <TextBox x:Name="DisplayBox" TextWrapping="Wrap" Grid.Row="0" Grid.Column="0" IsReadOnly="True"></TextBox>
                 <TextBox x:Name="SentBox" TextWrapping="Wrap" Grid.Row="0" Grid.Column="1" IsReadOnly="True"></TextBox>
+            </Grid>
+        </DockPanel>
+        <DockPanel LastChildFill="True" Margin="10, 20, 20, 20" Grid.Row="0" Grid.Column="1" >
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="2*"></RowDefinition>
+                    <RowDefinition></RowDefinition>
+                    <RowDefinition Height="2*"></RowDefinition>
+                </Grid.RowDefinitions>
+                <Grid Grid.Row="0">
+                    <Grid.RowDefinitions>
+                        <RowDefinition></RowDefinition>
+                        <RowDefinition Height="25"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <TextBox x:Name="EncryptInput" Grid.Row="0" TextWrapping="Wrap">Plaintext here</TextBox>
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="25"></ColumnDefinition>
+                            <ColumnDefinition></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock VerticalAlignment="Center" Grid.Column="0">Key:</TextBlock>
+                        <TextBox x:Name="KeyTextBox" Grid.Column="1"></TextBox>
+                    </Grid>
+                </Grid>
+                <TextBox x:Name="EncryptOutput" IsReadOnly="True" Grid.Row="2" TextWrapping="Wrap">Ciphertext output here</TextBox>
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition></ColumnDefinition>
+                        <ColumnDefinition></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Button x:Name="EncryptButton" Margin="20" Click="OnEncryptClick" Grid.Column="0">Encrypt</Button>
+                    <TextBox x:Name="TimeBox" Margin="0, 25" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" IsReadOnly="True" Grid.Column="1">Time to encrypt</TextBox>
+                </Grid>
             </Grid>
         </DockPanel>
     </Grid>

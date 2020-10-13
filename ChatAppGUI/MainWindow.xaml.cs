@@ -3,6 +3,8 @@ using Microsoft.Extensions.Configuration;
 using System;
 using System.IO;
 using System.Net;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -51,11 +53,31 @@ namespace ChatAppGUI
         {
             DisplayBox.Text += (s + '\n');
         }
-        public void OnClick(object sender, RoutedEventArgs e)
+        public void OnSendClick(object sender, RoutedEventArgs e)
         {
             SentBox.Text += (MessageBox.Text + '\n');
             Connection.Send(MessageBox.Text);
             MessageBox.Clear();
+        }
+        public void OnEncryptClick(object sender, RoutedEventArgs e)
+        {
+            DateTime start = DateTime.Now;
+            using (Aes alg = Aes.Create())
+            {
+                alg.Key = HexStringToByteArray(KeyTextBox.Text);
+                ICryptoTransform encryptor = alg.CreateEncryptor();
+                using (MemoryStream msEncrypt = new MemoryStream())
+                {
+                    using (CryptoStream csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                    {
+                        using (StreamWriter swEncrypt = new StreamWriter(csEncrypt))
+                            swEncrypt.Write(EncryptInput.Text);
+                        EncryptOutput.Text = Encoding.UTF8.GetString(msEncrypt.ToArray());
+                    }
+                }
+            }
+            TimeSpan elapsed = DateTime.Now - start;
+            TimeBox.Text = elapsed.TotalMilliseconds.ToString() + "ms";
         }
         private void OnClose(object sender, System.ComponentModel.CancelEventArgs e)
         {
